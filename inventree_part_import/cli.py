@@ -63,6 +63,8 @@ InteractiveChoices = click.Choice(("default", "false", "true", "twice"), case_se
 @click.option("--update-recursive", metavar="CATEGORY",
     help="Update all parts from InvenTree CATEGORY and from any of it's subcategories."
 )
+@click.option("--update-stock", metavar="[LOCATIONID]:[STOCK]", help="After creation / update of part, create / update stock in given location. Input must be in form [ID of Location]:[Amount of Stock].")
+
 @handle_errors
 def inventree_part_import(
     context,
@@ -77,6 +79,7 @@ def inventree_part_import(
     configure=None,
     update=None,
     update_recursive=None,
+    update_stock=None
 ):
     """Import supplier parts into InvenTree.
 
@@ -85,6 +88,14 @@ def inventree_part_import(
 
     from inventree.api import logger
     logger.disabled = True
+
+    # check for update_stock args
+    update_stock_location = None
+    update_stock_amount = 0
+    if update_stock:
+        if ":" in update_stock:
+            (update_stock_location, update_stock_amount) = update_stock.split(":")
+            info(f"updating stock to '{update_stock_amount}' in localtion '{update_stock_location}'", end="\n")
 
     if config_dir:
         try:
@@ -197,9 +208,9 @@ def inventree_part_import(
     try:
         for index, part in enumerate(parts):
             last_import_result = (
-                importer.import_part(part.name, part, supplier, only_supplier)
+                importer.import_part(part.name, part, supplier, only_supplier, update_stock_location, update_stock_amount)
                 if isinstance(part, Part) else
-                importer.import_part(part, None, supplier, only_supplier)
+                importer.import_part(part, None, supplier, only_supplier, update_stock_location, update_stock_amount)
             )
             print()
             match last_import_result:
@@ -221,9 +232,9 @@ def inventree_part_import(
             importer.interactive = True
             for part in parts2:
                 import_result = (
-                    importer.import_part(part.name, part, supplier, only_supplier)
+                    importer.import_part(part.name, part, supplier, only_supplier, update_stock_location, update_stock_amount)
                     if isinstance(part, Part) else
-                    importer.import_part(part, None, supplier, only_supplier)
+                    importer.import_part(part, None, supplier, only_supplier, update_stock_location, update_stock_amount)
                 )
                 match import_result:
                     case ImportResult.ERROR | ImportResult.FAILURE:

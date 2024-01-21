@@ -16,7 +16,8 @@ from .config import CATEGORIES_CONFIG, CONFIG, get_config, get_pre_creation_hook
 from .error_helper import *
 from .inventree_helpers import (create_manufacturer, get_manufacturer_part,
                                 get_parameter_templates, get_part, get_supplier_part,
-                                update_object_data, upload_datasheet, upload_image)
+                                update_object_data, upload_datasheet, upload_image,
+                                add_stock)
 from .suppliers import search
 from .suppliers.base import ApiPart
 
@@ -53,7 +54,9 @@ class PartImporter:
             search_term,
             existing_part: Part = None,
             supplier_id=None,
-            only_supplier=False
+            only_supplier=False,
+            update_stock_location=None, 
+            update_stock_amount=0
         ):
         info(f"searching for {search_term} ...", end="\n")
         import_result = ImportResult.SUCCESS
@@ -84,7 +87,7 @@ class PartImporter:
                 continue
 
             try:
-                import_result |= self.import_supplier_part(supplier, api_part, existing_part)
+                import_result |= self.import_supplier_part(supplier, api_part, existing_part, update_stock_location, update_stock_amount)
             except HTTPError as e:
                 import_result = ImportResult.ERROR
 
@@ -134,7 +137,11 @@ class PartImporter:
         index = select(choices, deselected_prefix="  ", selected_prefix="> ")
         return [*api_parts, None][index]
 
-    def import_supplier_part(self, supplier: Company, api_part: ApiPart, part: Part = None):
+    def add_or_update_stock(self, part_id, stock_location_id, update_stock_amount):
+
+        add_stock(self.api, stock_location_id, part_id, update_stock_amount)
+
+    def import_supplier_part(self, supplier: Company, api_part: ApiPart, part: Part = None, update_stock_location=None, update_stock_amount=0):
         import_result = ImportResult.SUCCESS
 
         if supplier_part := get_supplier_part(self.api, api_part.SKU):
@@ -211,6 +218,11 @@ class PartImporter:
 
         url = self.api.base_url + supplier_part.url[1:]
         success(f"{action_str} {supplier.name} part {supplier_part.SKU} ({url})")
+
+        # set stock location and amount
+        if (update_stock_location):
+            self.add_or_update_stock(supplier_part_data["part"], update_stock_location, update_stock_amount)
+
         return import_result
 
     def create_manufacturer_part(
