@@ -198,7 +198,7 @@ def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
             continue
 
         for child in values.keys():
-            if child.startswith("_") and child not in CATEGORY_ATTRIBUTES:
+            if child.startswith("_") and not child.startswith("__") and child not in CATEGORY_ATTRIBUTES:
                 warning(f"ignoring unknown special attribute '{child}' in category '{name}'")
 
         new_parameters = parameters + tuple(values.get("_parameters", []))
@@ -251,7 +251,7 @@ def parse_parameters(parameters_dict):
             continue
 
         for child in values.keys():
-            if child.startswith("_") and child not in PARAMETER_ATTRIBUTES:
+            if child.startswith("_") and not child.startswith("__") and child not in PARAMETER_ATTRIBUTES:
                 warning(f"ignoring unknown special attribute '{child}' in parameter '{name}'")
 
         parameters[name] = Parameter(
