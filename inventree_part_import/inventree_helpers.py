@@ -68,8 +68,8 @@ def get_category_parts(part_category: PartCategory, cascade):
 def add_stock(inventree_api: InvenTreeAPI, stock_location_id, part_id, stock_amount):
 
     # search stock locatiom
-    stock_location = StockLocation.list(inventree_api, pk=stock_location_id)
-    assert len(stock_location) == 1
+    # stock_location = StockLocation.list(inventree_api, pk=stock_location_id)
+    # assert len(stock_location) == 1
 
     # search for stock
     stock = StockItem.list(inventree_api, part=part_id)

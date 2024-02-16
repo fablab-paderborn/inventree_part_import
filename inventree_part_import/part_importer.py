@@ -332,6 +332,10 @@ class PartImporter:
             for parameter in Parameter.list(self.api, part=part.pk)
         }
 
+        print("Available Parameters")
+        for api_part_parameter, value in api_part.parameters.items():
+            print(api_part_parameter, " -> " ,value)
+
         matched_parameters = {}
         for api_part_parameter, value in api_part.parameters.items():
             for parameter in self.parameter_map.get(api_part_parameter, []):
@@ -408,7 +412,7 @@ class PartImporter:
 
     @staticmethod
     def select_parameter(parameter_name, parameters) -> tuple[str, str]:
-        N_MATCHES = min(5, len(parameters))
+        N_MATCHES = min(20, len(parameters))
         parameter_matches_items = sorted(
             parameters.items(),
             key=lambda item: max(fuzz.partial_ratio(parameter_name, term) for term in item),
